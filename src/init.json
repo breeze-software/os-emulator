@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "this is just a text note",
+      "tags": ["stuff", "other", "text"]
+    }
+  ],
+  "functions": [["foo"], ["bar", "hash:a660f78a..."], ["baz"]],
+  "programs": [
+    { "name": "apple", "content": "spec | entry: a660f78a..." },
+    { "name": "orange", "content": "spec | entry: 4ff2a550..." },
+    { "name": "banana", "content": "spec | entry: d173c165..." }
+  ],
+  "system_functions": {
+    "something": "[BINARY CONTENT (something)]",
+    "another": "[BINARY CONTENT (another)]"
+  }
+}
