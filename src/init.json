@@ -5,7 +5,11 @@
       "tags": ["stuff", "other", "text"]
     }
   ],
-  "functions": [["foo"], ["bar", "hash:a660f78a..."], ["baz"]],
+  "functions": [
+    { "content": ["foo"] },
+    { "content": ["bar", "hash:a660f78a..."] },
+    { "content": ["baz"] }
+  ],
   "programs": [
     { "name": "apple", "content": "spec | entry: a660f78a..." },
     { "name": "orange", "content": "spec | entry: 4ff2a550..." },
