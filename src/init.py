@@ -4,18 +4,6 @@ from copy import deepcopy
 import utils
 
 
-def add_file(out, content, tags, _from):
-    h = utils.calc_hash(content)
-    out["files"][h] = {
-        "data": content,
-        # "tags": tags,
-        # "when_modified": [utils.get_time()],
-        # "when_accessed": [],
-        "from": _from,
-    }
-    return out
-
-
 def build_file(content, tags, _from):
     h = utils.calc_hash(content)
     return (
@@ -31,51 +19,35 @@ def build_file(content, tags, _from):
 
 
 def build_source(sources, s):
-    return build_file(content=sources[s]["data"], tags=[], _from={})
+    h, out = build_file(content=sources[s]["data"], tags=[], _from={})
+    out["type"] = "source"
+    return h, out
 
 
 def build_function(functions, binaries, sources, f, p):
-    return build_file(
+    h, out = build_file(
         content=functions[f]["data"],
         tags=[],
         _from={binaries[p]["hash"]: [sources[f]["hash"]]},
     )
+    out["type"] = "function"
+    return h, out
+
+
+def build_program(programs, p):
+    h, out = build_file(content=programs[p]["data"], tags=[], _from={})
+    out["type"] = "program spec"
+    return h, out
 
 
 def build_binary(binaries, programs, compiler, s):
-    return build_file(
+    h, out = build_file(
         content=binaries[s]["data"],
         tags=[],
         _from={binaries[compiler]["hash"]: [programs[s]["hash"]]},
     )
-
-
-def add_system_function(out, name):
-    s = f"[BINARY CONTENT ({name})]"
-    h = utils.calc_hash(s)
-    out["system_functions"][h] = s
-    out["programs"][name] = h
-    return out
-
-
-def add_function(out, f):
-    h = utils.calc_hash(f)
-    out["files"][h] = {"data": f}
-    return out
-
-
-def add_program(out, name, spec):
-    p = ["spec", {"entry": spec}]
-    h = utils.calc_hash(p)
-    out["programs"][name] = h
-    out["permissions"][h] = {
-        "file (read)": True,
-        "file (write)": False,
-        "network (incoming)": False,
-        "network (outgoing)": False,
-    }
-    out = add_file(out, content=p, tags=[])
-    return out
+    out["type"] = "binary"
+    return h, out
 
 
 def permissions():
@@ -191,7 +163,8 @@ def parse():
         out["files"][h] = func
 
     for k in programs.keys():
-        out = add_file(out, content=programs[k]["data"], tags=[], _from={})
+        h, p = build_program(programs, k)
+        out["files"][h] = p
 
     for s in binaries.keys():
         if s in ["print", "list"]:
@@ -201,90 +174,5 @@ def parse():
             out["files"][h] = b
             out["programs"][s] = h
             out["permissions"][h] = permissions()
-
-    """
-
-    out = add_file(
-        out,
-        content="this is just a text note",
-        tags=["stuff", "other", "text"],
-        _from={},
-    )
-    out = add_file(out, content="another text note", tags=["text"], _from={})
-    for s in ["parser-a", "parser-b", "parser-spec", "compile-default"]:
-        h, data = build_source(sources, s)
-        out["files"][h] = data
-
-    out = add_file(
-        out,
-        content=parsers["parser-a"]["data"],
-        tags=[],
-        _from={parsers["parser-a"]["hash"]: [sources["parser-a"]["hash"]]},
-    )
-    out = add_file(
-        out,
-        content=parsers["parser-b"]["data"],
-        tags=[],
-        _from={parsers["parser-a"]["hash"]: [sources["parser-b"]["hash"]]},
-    )
-
-
-    out = add_file(out, content=programs["apple"]["data"], tags=[], _from={})
-
-
-    for s in ["foo", "baz", "bar-foo"]:
-        out = add_file(out, content=functions[s]["data"], tags=[], _from={})
-    """
-
-    return out
-
-
-def temp___():
-    out = add_file(
-        out,
-        content="this is fake source code that is parsed via 'parser-a' into a Language B parser",
-        tags=[],
-    )
-
-    out = add_function(out, ["foo"])
-    out = add_function(out, ["bar", "hash:" + utils.calc_hash(["foo"])])
-    out = add_function(out, ["baz"])
-
-    out = add_function(out, ["parse", "Language A"])
-    out = add_function(out, ["parse", "Language B"])
-
-    out = add_function(out, ["compile", "default"])
-
-    out = add_program(out, name="apple", spec=utils.calc_hash(["foo"]))
-    out = add_program(
-        out,
-        name="orange",
-        spec=utils.calc_hash([["bar", "hash:" + utils.calc_hash(["foo"])]]),
-    )
-    out = add_program(out, name="banana", spec=utils.calc_hash(["baz"]))
-
-    out = add_program(
-        out, name="parse-a", spec=utils.calc_hash(["parse", "Language A"])
-    )
-    out = add_program(
-        out, name="parse-b", spec=utils.calc_hash(["parse", "Language B"])
-    )
-
-    out = add_program(
-        out, name="compile-default", spec=utils.calc_hash(["compile", "default"])
-    )
-
-    for h in [
-        "16d120da...",
-        "3b3ec66a...",
-        "46068258...",
-        "4ff2a550...",
-        "d173c165...",
-    ]:
-        out["files"][h]["parser"] = out["programs"]["parse-a"]
-        out["files"][h]["compiler"] = out["programs"]["compile-default"]
-
-    out["files"]["a660f78a..."]["parser"] = out["programs"]["parse-b"]
-    out["files"]["a660f78a..."]["compiler"] = out["programs"]["compile-default"]
 
     return out
